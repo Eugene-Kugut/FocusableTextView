@@ -31,6 +31,8 @@ struct FocusableTextViewRepresentable: NSViewRepresentable {
         let containerView = ContainerView()
         containerView.cornerRadius = cornerRadius
         containerView.fillColor = NSColor(backgroundColor)
+        containerView.overlayColor = NSColor(overlayColor)
+        containerView.overlayLineWidth = overlayLineWidth
         containerView.onHoverChanged = { [weak coordinator = context.coordinator] isHovering in
             coordinator?.setHovering(isHovering)
         }
@@ -46,8 +48,8 @@ struct FocusableTextViewRepresentable: NSViewRepresentable {
         textView.allowsKeyLoopFocus = !isDisabled
         textView.isEditable = !isDisabled
 
-        textView.onBecameFirstResponder = { [weak coordinator = context.coordinator] in
-            coordinator?.setFocusedFromAppKit(true)
+        textView.onBecameFirstResponder = { [weak coordinator = context.coordinator] acquisition in
+            coordinator?.setFocusedFromAppKit(true, acquisition: acquisition)
         }
         textView.onResignedFirstResponder = { [weak coordinator = context.coordinator] in
             coordinator?.setFocusedFromAppKit(false)
@@ -110,6 +112,7 @@ struct FocusableTextViewRepresentable: NSViewRepresentable {
         containerView.needsDisplay = true
         containerView.needsLayout = true
         context.coordinator.applyBackground()
+        context.coordinator.applyOverlay()
 
         return containerView
     }
@@ -146,6 +149,7 @@ struct FocusableTextViewRepresentable: NSViewRepresentable {
 
         context.coordinator.applyFocusIfNeeded()
         context.coordinator.applyBackground()
+        context.coordinator.applyOverlay()
     }
 
     // MARK: - Coordinator
@@ -162,7 +166,10 @@ struct FocusableTextViewRepresentable: NSViewRepresentable {
 
         private var isApplyingFocus: Bool = false
         private var isHovering: Bool = false
+        private var isFocusedByTabNavigation: Bool = false
         private var lastAppliedFillColor: NSColor?
+        private var lastAppliedOverlayColor: NSColor?
+        private var lastAppliedOverlayLineWidth: CGFloat?
 
         init(configuration: FocusableTextViewRepresentable) {
             self.configuration = configuration
@@ -202,13 +209,27 @@ struct FocusableTextViewRepresentable: NSViewRepresentable {
             }
         }
 
-        func setFocusedFromAppKit(_ focused: Bool) {
+        func setFocusedFromAppKit(
+            _ focused: Bool,
+            acquisition: KeyLoopTextView.FocusAcquisition = .other
+        ) {
             guard configuration.isDisabled == false else { return }
             guard isApplyingFocus == false else { return }
-            guard configuration.isFocused != focused else { return }
+
+            if focused {
+                isFocusedByTabNavigation = (acquisition == .tabNavigation)
+            } else {
+                isFocusedByTabNavigation = false
+            }
+
+            guard configuration.isFocused != focused else {
+                applyOverlay()
+                return
+            }
 
             configuration.isFocused = focused
             applyBackground()
+            applyOverlay()
         }
 
         func applyFocusIfNeeded() {
@@ -230,6 +251,8 @@ struct FocusableTextViewRepresentable: NSViewRepresentable {
                 }
             } else if window.firstResponder === textView {
                 window.makeFirstResponder(nil)
+                isFocusedByTabNavigation = false
+                applyOverlay()
             }
         }
 
@@ -259,6 +282,30 @@ struct FocusableTextViewRepresentable: NSViewRepresentable {
             containerView.setFillColor(resolvedColor, animated: shouldAnimate)
         }
 
+        func applyOverlay() {
+            guard let containerView else { return }
+
+            let color: Color
+            let lineWidth: CGFloat
+
+            if configuration.isFocused && isFocusedByTabNavigation {
+                color = configuration.focusedOverlay
+                lineWidth = configuration.focusedOverlayLineWidth
+            } else {
+                color = configuration.overlayColor
+                lineWidth = configuration.overlayLineWidth
+            }
+
+            let resolvedColor = NSColor(color)
+            let didChangeColor = lastAppliedOverlayColor?.isEqual(resolvedColor) != true
+            let didChangeLineWidth = lastAppliedOverlayLineWidth != lineWidth
+            guard didChangeColor || didChangeLineWidth else { return }
+
+            lastAppliedOverlayColor = resolvedColor
+            lastAppliedOverlayLineWidth = lineWidth
+            containerView.setOverlay(color: resolvedColor, lineWidth: lineWidth)
+        }
+
         func installOutsideClickMonitor(for observedView: NSView) {
             removeOutsideClickMonitor()
 
@@ -278,7 +325,7 @@ struct FocusableTextViewRepresentable: NSViewRepresentable {
                 window.makeFirstResponder(nil)
 
                 if configuration.isDisabled == false {
-                    setFocusedFromAppKit(false)
+                    setFocusedFromAppKit(false, acquisition: .other)
                 }
             }
 

@@ -3,7 +3,12 @@ import AppKit
 @MainActor
 final class KeyLoopTextView: NSTextView {
 
-    var onBecameFirstResponder: (() -> Void)?
+    enum FocusAcquisition {
+        case tabNavigation
+        case other
+    }
+
+    var onBecameFirstResponder: ((FocusAcquisition) -> Void)?
     var onResignedFirstResponder: (() -> Void)?
     var allowsKeyLoopFocus: Bool = true
 
@@ -14,7 +19,9 @@ final class KeyLoopTextView: NSTextView {
     override func becomeFirstResponder() -> Bool {
         guard allowsKeyLoopFocus else { return false }
         let didBecome = super.becomeFirstResponder()
-        if didBecome { onBecameFirstResponder?() }
+        if didBecome {
+            onBecameFirstResponder?(focusAcquisitionFromCurrentEvent())
+        }
         return didBecome
     }
 
@@ -30,5 +37,16 @@ final class KeyLoopTextView: NSTextView {
 
     override func insertBacktab(_ sender: Any?) {
         window?.selectPreviousKeyView(sender)
+    }
+
+    private func focusAcquisitionFromCurrentEvent() -> FocusAcquisition {
+        guard let event = NSApp.currentEvent else { return .other }
+        guard event.type == .keyDown else { return .other }
+
+        if event.keyCode == 48 || event.charactersIgnoringModifiers == "\t" {
+            return .tabNavigation
+        }
+
+        return .other
     }
 }
