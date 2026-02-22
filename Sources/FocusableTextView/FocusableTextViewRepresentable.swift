@@ -29,8 +29,11 @@ struct FocusableTextViewRepresentable: NSViewRepresentable {
 
     func makeNSView(context: Context) -> ContainerView {
         let containerView = ContainerView()
-        containerView.cornerRadius = cornerRadius        
+        containerView.cornerRadius = cornerRadius
         containerView.fillColor = NSColor(backgroundColor)
+        containerView.onHoverChanged = { [weak coordinator = context.coordinator] isHovering in
+            coordinator?.setHovering(isHovering)
+        }
 
         let scrollView = ClickToFocusScrollView()
         scrollView.drawsBackground = false
@@ -106,6 +109,7 @@ struct FocusableTextViewRepresentable: NSViewRepresentable {
 
         containerView.needsDisplay = true
         containerView.needsLayout = true
+        context.coordinator.applyBackground()
 
         return containerView
     }
@@ -114,7 +118,6 @@ struct FocusableTextViewRepresentable: NSViewRepresentable {
         context.coordinator.configuration = self
 
         containerView.cornerRadius = cornerRadius
-        containerView.fillColor = NSColor(backgroundColor)
 
         containerView.needsDisplay = true
         containerView.needsLayout = true
@@ -142,6 +145,7 @@ struct FocusableTextViewRepresentable: NSViewRepresentable {
         }
 
         context.coordinator.applyFocusIfNeeded()
+        context.coordinator.applyBackground()
     }
 
     // MARK: - Coordinator
@@ -151,12 +155,14 @@ struct FocusableTextViewRepresentable: NSViewRepresentable {
 
         var configuration: FocusableTextViewRepresentable
 
-        weak var containerView: NSView?
+        weak var containerView: ContainerView?
         weak var textView: KeyLoopTextView?
 
         nonisolated(unsafe) private var outsideClickMonitorToken: Any?
 
         private var isApplyingFocus: Bool = false
+        private var isHovering: Bool = false
+        private var lastAppliedFillColor: NSColor?
 
         init(configuration: FocusableTextViewRepresentable) {
             self.configuration = configuration
@@ -202,6 +208,7 @@ struct FocusableTextViewRepresentable: NSViewRepresentable {
             guard configuration.isFocused != focused else { return }
 
             configuration.isFocused = focused
+            applyBackground()
         }
 
         func applyFocusIfNeeded() {
@@ -224,6 +231,32 @@ struct FocusableTextViewRepresentable: NSViewRepresentable {
             } else if window.firstResponder === textView {
                 window.makeFirstResponder(nil)
             }
+        }
+
+        func setHovering(_ hovering: Bool) {
+            guard isHovering != hovering else { return }
+            isHovering = hovering
+            applyBackground()
+        }
+
+        func applyBackground() {
+            guard let containerView else { return }
+
+            let color: Color
+            if configuration.isFocused {
+                color = configuration.focusedBackground
+            } else if isHovering {
+                color = configuration.hoveredBackground
+            } else {
+                color = configuration.backgroundColor
+            }
+
+            let resolvedColor = NSColor(color)
+            guard lastAppliedFillColor?.isEqual(resolvedColor) != true else { return }
+
+            let shouldAnimate = lastAppliedFillColor != nil
+            lastAppliedFillColor = resolvedColor
+            containerView.setFillColor(resolvedColor, animated: shouldAnimate)
         }
 
         func installOutsideClickMonitor(for observedView: NSView) {
