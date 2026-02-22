@@ -8,7 +8,17 @@ struct FocusableTextViewRepresentable: NSViewRepresentable {
     @Binding var isFocused: Bool
 
     let font: NSFont
+
     let backgroundColor: Color
+    let focusedBackground: Color
+    let hoveredBackground: Color
+
+    let focusedOverlay: Color
+    let focusedOverlayLineWidth: CGFloat
+
+    let overlayColor: Color
+    let overlayLineWidth: CGFloat
+
     let cornerRadius: CGFloat
     let contentInsets: NSEdgeInsets
     let isDisabled: Bool
@@ -19,7 +29,7 @@ struct FocusableTextViewRepresentable: NSViewRepresentable {
 
     func makeNSView(context: Context) -> ContainerView {
         let containerView = ContainerView()
-        containerView.cornerRadius = cornerRadius
+        containerView.cornerRadius = cornerRadius        
         containerView.fillColor = NSColor(backgroundColor)
 
         let scrollView = ClickToFocusScrollView()
