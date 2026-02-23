@@ -17,6 +17,7 @@ struct DemoView: View {
                     focusedOverlayLineWidth: 1,
                     overlayColor: .gray,
                     overlayLineWidth: 1 / 6,
+                    singleLine: true,
                     cornerRadius: 8
                 )
                 .padding()

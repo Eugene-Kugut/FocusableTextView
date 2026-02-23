@@ -40,6 +40,7 @@ FocusableTextView(
     font: .systemFont(ofSize: NSFont.systemFontSize),
     backgroundColor: Color(NSColor.systemFill).opacity(0.5),
     disabled: false,
+    singleLine: false,
     cornerRadius: 4,
     contentInsets: .init(top: 8, left: 4, bottom: 8, right: 4)
 )

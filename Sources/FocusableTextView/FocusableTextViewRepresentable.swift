@@ -22,6 +22,7 @@ struct FocusableTextViewRepresentable: NSViewRepresentable {
     let cornerRadius: CGFloat
     let contentInsets: NSEdgeInsets
     let isDisabled: Bool
+    let singleLine: Bool
 
     func makeCoordinator() -> Coordinator {
         Coordinator(configuration: self)
@@ -207,6 +208,18 @@ struct FocusableTextViewRepresentable: NSViewRepresentable {
             if configuration.text != changedTextView.string {
                 configuration.text = changedTextView.string
             }
+        }
+
+        func textView(_ textView: NSTextView, doCommandBy commandSelector: Selector) -> Bool {
+            guard configuration.singleLine else { return false }
+
+            if commandSelector == #selector(NSResponder.insertNewline(_:)) ||
+                commandSelector == #selector(NSResponder.insertNewlineIgnoringFieldEditor(_:)) {
+                textView.selectAll(nil)
+                return true
+            }
+
+            return false
         }
 
         func setFocusedFromAppKit(

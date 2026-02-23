@@ -17,6 +17,7 @@ public struct FocusableTextView: View {
     private let cornerRadius: CGFloat
     private let contentInsets: NSEdgeInsets
     private let isDisabled: Bool
+    private let singleLine: Bool
 
     public init(
         text: Binding<String>,
@@ -33,6 +34,7 @@ public struct FocusableTextView: View {
         overlayLineWidth: CGFloat = 1 / 3,
 
         disabled: Bool = false,
+        singleLine: Bool = false,
         cornerRadius: CGFloat = 4,
         contentInsets: NSEdgeInsets = .init(top: 8, left: 4, bottom: 8, right: 4)
     ) {
@@ -48,6 +50,7 @@ public struct FocusableTextView: View {
         self.cornerRadius = cornerRadius
         self.contentInsets = contentInsets
         self.isDisabled = disabled
+        self.singleLine = singleLine
     }
 
     public var body: some View {
@@ -64,7 +67,8 @@ public struct FocusableTextView: View {
             overlayLineWidth: overlayLineWidth,
             cornerRadius: cornerRadius,
             contentInsets: contentInsets,
-            isDisabled: isDisabled
+            isDisabled: isDisabled,
+            singleLine: singleLine
         )
     }
 }
