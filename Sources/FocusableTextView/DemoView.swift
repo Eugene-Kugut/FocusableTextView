@@ -11,7 +11,7 @@ struct DemoView: View {
                 FocusableTextView(
                     text: $text1,
                     backgroundColor: .white.opacity(0.5),
-                    focusedBackground: .white,
+                    focusedBackground: .white.opacity(0.8),
                     hoveredBackground: .white,
                     focusedOverlay: .blue,
                     focusedOverlayLineWidth: 1,
@@ -25,7 +25,7 @@ struct DemoView: View {
                     text: $text2,
                     font: .systemFont(ofSize: 16, weight: .light),
                     backgroundColor: .white.opacity(0.5),
-                    focusedBackground: .white,
+                    focusedBackground: .white.opacity(0.8),
                     hoveredBackground: .white,
                     focusedOverlay: .blue,
                     focusedOverlayLineWidth: 1,

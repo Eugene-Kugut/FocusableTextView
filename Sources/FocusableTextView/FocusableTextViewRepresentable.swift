@@ -290,10 +290,10 @@ struct FocusableTextViewRepresentable: NSViewRepresentable {
             guard let containerView else { return }
 
             let color: Color
-            if configuration.isFocused {
-                color = configuration.focusedBackground
-            } else if isHovering {
+            if isHovering {
                 color = configuration.hoveredBackground
+            } else if configuration.isFocused {
+                color = configuration.focusedBackground
             } else {
                 color = configuration.backgroundColor
             }
