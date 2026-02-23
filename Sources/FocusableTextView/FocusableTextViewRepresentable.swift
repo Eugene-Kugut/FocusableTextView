@@ -55,6 +55,9 @@ struct FocusableTextViewRepresentable: NSViewRepresentable {
         textView.onResignedFirstResponder = { [weak coordinator = context.coordinator] in
             coordinator?.setFocusedFromAppKit(false)
         }
+        textView.onMouseInteraction = { [weak coordinator = context.coordinator] in
+            coordinator?.setMouseInteractionInsideFocusedControl()
+        }
 
         textView.delegate = context.coordinator
         textView.string = text
@@ -242,6 +245,14 @@ struct FocusableTextViewRepresentable: NSViewRepresentable {
 
             configuration.isFocused = focused
             applyBackground()
+            applyOverlay()
+        }
+
+        func setMouseInteractionInsideFocusedControl() {
+            guard configuration.isDisabled == false else { return }
+            guard configuration.isFocused else { return }
+
+            isFocusedByTabNavigation = false
             applyOverlay()
         }
 

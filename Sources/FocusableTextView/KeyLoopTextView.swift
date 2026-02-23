@@ -10,6 +10,7 @@ final class KeyLoopTextView: NSTextView {
 
     var onBecameFirstResponder: ((FocusAcquisition) -> Void)?
     var onResignedFirstResponder: (() -> Void)?
+    var onMouseInteraction: (() -> Void)?
     var allowsKeyLoopFocus: Bool = true
 
     override var acceptsFirstResponder: Bool {
@@ -37,6 +38,21 @@ final class KeyLoopTextView: NSTextView {
 
     override func insertBacktab(_ sender: Any?) {
         window?.selectPreviousKeyView(sender)
+    }
+
+    override func mouseDown(with event: NSEvent) {
+        onMouseInteraction?()
+        super.mouseDown(with: event)
+    }
+
+    override func rightMouseDown(with event: NSEvent) {
+        onMouseInteraction?()
+        super.rightMouseDown(with: event)
+    }
+
+    override func otherMouseDown(with event: NSEvent) {
+        onMouseInteraction?()
+        super.otherMouseDown(with: event)
     }
 
     private func focusAcquisitionFromCurrentEvent() -> FocusAcquisition {
